@@ -20,7 +20,7 @@ Note: There is a 40-minute [video tutorial](https://www.youtube.com/watch?v=jWjq
 * Window functions for calculating ranking, offsets, and more
 * [Better than plyr](http://blog.rstudio.org/2014/01/17/introducing-dplyr/) if you're only working with data frames (though it doesn't yet duplicate all of the plyr functionality)
 * Examples below are based upon the [latest release](https://github.com/hadley/dplyr/releases), version 0.2 (released May 2014)
-
+#This is updated 1
 
 ## Loading dplyr and an example dataset
 
