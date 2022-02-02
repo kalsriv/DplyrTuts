@@ -1,0 +1,161 @@
+---
+title: "Dplyr_2020_conference"
+author: "Kalyan Srivastava"
+date: "2/1/2022"
+output: html_document
+#https://rstudio-conf-2020.github.io/r-for-excel/tidying.html#tidyrpivot_longer-to-reshape-from-wider-to-longer-format
+# Data is loaded here https://drive.google.com/drive/folders/1RywSUw8hxETlROdIhLIntxPsZq0tKSdS
+---
+```{r}
+library(tidyverse)
+library(janitor)
+library(here)
+library(readxl)
+
+```
+```{r}
+inverts <- read_excel(file.choose())
+inverts %>% glimpse()
+```
+```{r}
+print(summary(inverts))
+print(inverts  %>% head(n=2))
+class(inverts)
+dim(inverts)
+```
+```{r}
+inverts %>%  group_by(common_name) #%>%
+  
+inverts %>%
+    summarize(site =  n())
+
+inverts %>%  group_by(common_name) %>%
+    summarize(site =  n()) #This would count by category of species
+
+inverts %>%  group_by(site, common_name)# Makes first category site than another one common_name
+
+inverts %>%  group_by(site, common_name) %>%
+    summarize(site =  n())
+
+
+```
+```{r}
+iris_summary <- iris %>%
+  group_by(Species) %>%
+  summarize(Sepal.Length =  n(), 
+            mean_width_mm = mean(Sepal.Width, na.rm = TRUE), 
+            sd_width_mm = sd(Sepal.Width, na.rm = TRUE))
+print(iris_summary)
+
+#The code above would first categorize based on the species, than count the number of sepal.length entry in each category (which is 50) and fianlly provide mean and sd of sepal width for each category
+
+```
+
+```{r}
+# Note: Either single-quotes, double-quotes, OR backticks around years work!
+
+inverts_long <- pivot_longer(data = inverts, 
+                                    cols = '2016':'2018',
+                                    names_to = "year",
+                                    values_to = "sp_count")
+View(inverts_long)
+```
+```{r}
+#run the similar for iris data sets
+iris <- datasets::iris
+print(colnames(iris))
+iris_long <- pivot_longer(data = iris,
+                          cols = c("Sepal.Length", "Petal.Length"),
+                          names_to = "Length",
+                          values_to = "Measure")
+
+View(iris_long)
+print(str(iris_long))
+```
+```{r}
+inverts_wide <- inverts_long %>% 
+  pivot_wider(names_from = common_name, 
+                     values_from = sp_count)
+View(inverts_wide)
+
+#Check the View output on right
+```
+
+```{r}
+#Use janitor engineer to check iris data and inverts
+print(iris %>% janitor::get_dupes(Sepal.Width)) #Checks duplicates of variable you have mentioned
+#Becomes handy when checking the patient ID or visit duplicates
+print(inverts %>% janitor::get_dupes(c('site' , 'common_name'))) #Combining two columns, no records found in this case
+
+print(inverts %>% janitor::get_dupes(-c('site' , 'common_name'))) #Check if all the year columns were duplicated
+print(inverts_wide  %>% colnames())
+print(inverts_wide %>%  clean_names() %>% colnames())
+#check the difference 
+```
+```{r}
+inverts_long %>% 
+    unite(col = "site_year", # What to name the new united column
+          c(site, year), # The columns we'll unite (site, year)
+          sep = "_")
+```
+```{r}
+#Let us create a single column in 
+colnames(iris_summary)
+iris_summary %>% 
+    unite(col = "mean_sd", # What to name the new united column
+          c(mean_width_mm, sd_width_mm), # The columns we'll unite (site, year)
+          sep = "+/-")
+
+
+```
+```{r}
+outputStat <- iris_summary %>% 
+    unite(col = "mean_sd", # What to name the new united column
+          c(mean_width_mm, sd_width_mm), # The columns we'll unite (site, year)
+          sep = "+/-")
+
+ outputStat %>% kable()
+```
+
+```{r}
+#If the month and year are seperate column, use the unite function as described above
+
+inverts_long %>% 
+  unite(col = "mo_yr", # What to name the new united column
+               c(month, year), # The columns we'll unite (site, year)
+               sep = "/") 
+```
+
+```{r}
+#Combine three columns
+inverts_long %>% 
+  tidyr::unite(col = "year_site_name",
+               c(year, site, common_name),
+               sep = "-") 
+```
+
+```{r}
+inverts_unite <- inverts_long %>% 
+    unite(col = "site_year", # What to name the new united column
+          c(site, year), # The columns we'll unite (site, year)
+          sep = "_")
+print(head(inverts_unite))
+
+#We will split the site_year in two columns now
+inverts_sep <- inverts_unite %>% 
+  tidyr::separate(site_year, into = c("my_site", "my_year"))
+print(head(inverts_sep))
+
+```
+```{r}
+ca_abbr <- inverts %>% 
+  mutate(
+    common_name = 
+      str_replace(common_name, 
+              pattern = "california", 
+              replacement = "CA")
+  )
+
+print(head(ca_abbr))
+```
+
